@@ -48,10 +48,12 @@ case $1 in
                 rm -rf deb
                 mkdir deb &&
                 cd deb &&
-                which apt-rdepends > /dev/null
+                which apt-cache > /dev/null
                 if [ $? -eq 0 ]; then
-                    echo -e "$MARKER Scanning dependencies with apt-rdepends..."
-                    for dep in `apt-rdepends $package|grep -v "^ "`; do
+                    echo -e "$MARKER Scanning dependencies with apt-cache..."
+                    for dep in `apt-cache depends --recurse --no-recommends --no-suggests \
+                                --no-conflicts --no-breaks --no-replaces --no-enhances \
+                                --no-pre-depends ${package} | grep "^\w"`; do
                         dpkg -l $dep > /dev/null 2>&1
                         if [ $? -eq 1 ]; then
                             echo -e "$MARKER $dep is not present on the system, installing it locally"
@@ -60,16 +62,16 @@ case $1 in
                     done
                 else
                     echo -e "$MARKER WARNING:"
-                    echo "apt-rdepends is not installed, if you want recursive"
+                    echo "apt-cache is not installed, if you want recursive"
                     echo "         installation run the following command:"
                     echo ""
-                    echo "notroot install apt-rdepends"
+                    echo "notroot install apt-cache"
                     echo ""
                 fi
                 apt-get download $package
                 cd .. &&
                 for deb in deb/*.deb; do
-                    dpkg -x $deb . 
+                    dpkg -x $deb .
                 done
             fi
             if [ "$MODE" = "yum" ]; then
